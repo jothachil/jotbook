@@ -1,89 +1,34 @@
-import { marked } from "marked";
-import { useEffect, useRef, useState } from "react";
-import { createHighlighter } from "shiki";
+import { useEffect, useState } from "react";
+import rehypePrettyCode from "rehype-pretty-code";
+import rehypeStringify from "rehype-stringify";
+import remarkBreaks from "remark-breaks";
+import remarkGfm from "remark-gfm";
+import remarkParse from "remark-parse";
+import remarkRehype from "remark-rehype";
+import { unified } from "unified";
 
-marked.setOptions({
-	gfm: true,
-	breaks: true,
-});
+const processor = unified()
+	.use(remarkParse)
+	.use(remarkGfm)
+	.use(remarkBreaks)
+	.use(remarkRehype)
+	.use(rehypePrettyCode, {
+		theme: "github-dark-default",
+		keepBackground: true,
+	})
+	.use(rehypeStringify);
 
-let highlighterPromise = null;
-
-function getHighlighter() {
-	if (!highlighterPromise) {
-		highlighterPromise = createHighlighter({
-			themes: ["github-dark-default"],
-			langs: [
-				"javascript",
-				"typescript",
-				"jsx",
-				"tsx",
-				"html",
-				"css",
-				"json",
-				"markdown",
-				"python",
-				"bash",
-				"shell",
-				"sql",
-				"yaml",
-				"rust",
-				"go",
-				"java",
-				"c",
-				"cpp",
-			],
-		});
-	}
-	return highlighterPromise;
-}
-
-function escapeHtml(text) {
-	return text
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;");
-}
-
-async function renderMarkdown(content, highlighter) {
+async function renderMarkdown(content) {
 	if (!content) return "";
-
-	const renderer = new marked.Renderer();
-
-	renderer.code = ({ text, lang }) => {
-		const language = lang || "";
-		try {
-			if (highlighter) {
-				const loadedLangs = highlighter.getLoadedLanguages();
-				const resolvedLang =
-					language && loadedLangs.includes(language) ? language : "text";
-				return highlighter.codeToHtml(text, {
-					lang: resolvedLang,
-					theme: "github-dark-default",
-				});
-			}
-		} catch {
-			// Fall back to plain rendering
-		}
-		return `<pre><code class="language-${language}">${escapeHtml(text)}</code></pre>`;
-	};
-
-	return marked.parse(content, { renderer });
+	const result = await processor.process(content);
+	return String(result);
 }
 
 export default function MarkdownPreview({ content }) {
 	const [html, setHtml] = useState("");
-	const highlighterRef = useRef(null);
 
 	useEffect(() => {
-		getHighlighter().then((hl) => {
-			highlighterRef.current = hl;
-			renderMarkdown(content, hl).then(setHtml);
-		});
-	}, [content]);
-
-	useEffect(() => {
-		renderMarkdown(content, highlighterRef.current).then(setHtml);
+		renderMarkdown(content).then(setHtml);
 	}, [content]);
 
 	return (
@@ -98,9 +43,8 @@ export default function MarkdownPreview({ content }) {
 				prose-strong:text-foreground prose-strong:font-semibold
 				prose-code:text-brand-300 prose-code:bg-neutral-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-[13px] prose-code:before:content-none prose-code:after:content-none
 				[&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:rounded-none [&_pre_code]:text-inherit
-				prose-pre:bg-neutral-900 prose-pre:border prose-pre:border-neutral-800 prose-pre:rounded-lg prose-pre:p-4 prose-pre:overflow-x-auto prose-pre:text-[13px] prose-pre:leading-relaxed
-				[&_pre.shiki]:bg-neutral-900 [&_pre.shiki]:border [&_pre.shiki]:border-neutral-800 [&_pre.shiki]:rounded-lg [&_pre.shiki]:p-4 [&_pre.shiki]:overflow-x-auto [&_pre.shiki]:text-[13px] [&_pre.shiki]:leading-relaxed
-				[&_pre.shiki_span]:text-[var(--shiki-default)]
+				[&_pre]:bg-neutral-900 [&_pre]:border [&_pre]:border-neutral-800 [&_pre]:rounded-lg [&_pre]:p-4 [&_pre]:overflow-x-auto [&_pre]:text-[13px] [&_pre]:leading-relaxed
+				[&_pre_code_span]:text-(--shiki-default)
 				prose-blockquote:border-brand-500 prose-blockquote:text-muted-foreground
 				prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5
 				prose-hr:border-neutral-800"
