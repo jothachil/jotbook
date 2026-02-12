@@ -15,18 +15,35 @@ export default function App() {
 	const editorRef = useRef(null);
 	const saveTimeoutRef = useRef(null);
 	const hasBumpedRef = useRef(false);
+	const contentRef = useRef("");
+	const activeNoteIdRef = useRef(null);
+	const handleNewNoteRef = useRef(null);
+
+	const loadNotes = useCallback(async () => {
+		const data = await window.api.getNotes();
+		setNotes(data);
+		return data;
+	}, []);
 
 	// Load all notes on mount
 	useEffect(() => {
 		loadNotes();
-	}, []);
+	}, [loadNotes]);
+
+	useEffect(() => {
+		contentRef.current = content;
+	}, [content]);
+
+	useEffect(() => {
+		activeNoteIdRef.current = activeNoteId;
+	}, [activeNoteId]);
 
 	// Keyboard shortcuts
 	useEffect(() => {
 		const handleKeyDown = (e) => {
 			if ((e.metaKey || e.ctrlKey) && e.key === "n") {
 				e.preventDefault();
-				handleNewNote();
+				handleNewNoteRef.current?.();
 			}
 			if ((e.metaKey || e.ctrlKey) && e.key === "b") {
 				e.preventDefault();
@@ -35,13 +52,7 @@ export default function App() {
 		};
 		document.addEventListener("keydown", handleKeyDown);
 		return () => document.removeEventListener("keydown", handleKeyDown);
-	}, [activeNoteId, content]);
-
-	const loadNotes = async () => {
-		const data = await window.api.getNotes();
-		setNotes(data);
-		return data;
-	};
+	}, []);
 
 	// Auto-save with debounce — bumps note to top once per editing session
 	const scheduleSave = useCallback((noteId, newContent) => {
@@ -81,8 +92,10 @@ export default function App() {
 
 	const handleSelectNote = useCallback(
 		async (id) => {
-			if (activeNoteId) {
-				await flushSave(activeNoteId, content);
+			const currentActiveId = activeNoteIdRef.current;
+			const currentContent = contentRef.current;
+			if (currentActiveId) {
+				await flushSave(currentActiveId, currentContent);
 			}
 			hasBumpedRef.current = false;
 			setActiveNoteId(id);
@@ -92,12 +105,14 @@ export default function App() {
 				setTimeout(() => editorRef.current?.focus(), 0);
 			}
 		},
-		[activeNoteId, content, flushSave],
+		[flushSave],
 	);
 
 	const handleNewNote = useCallback(async () => {
-		if (activeNoteId) {
-			await flushSave(activeNoteId, content);
+		const currentActiveId = activeNoteIdRef.current;
+		const currentContent = contentRef.current;
+		if (currentActiveId) {
+			await flushSave(currentActiveId, currentContent);
 		}
 		const note = await window.api.createNote();
 		await loadNotes();
@@ -105,7 +120,8 @@ export default function App() {
 		setActiveNoteId(note.id);
 		setContent("");
 		setTimeout(() => editorRef.current?.focus(), 0);
-	}, [activeNoteId, content, flushSave]);
+	}, [flushSave, loadNotes]);
+	handleNewNoteRef.current = handleNewNote;
 
 	const handleDuplicateNote = useCallback(async (id) => {
 		if (!id) return;
@@ -117,7 +133,7 @@ export default function App() {
 			setContent(note.content || "");
 			setTimeout(() => editorRef.current?.focus(), 0);
 		}
-	}, []);
+	}, [loadNotes]);
 
 	const activeNote = notes.find((n) => n.id === activeNoteId);
 	const wordCount = useMemo(() => {
@@ -126,12 +142,13 @@ export default function App() {
 	}, [content]);
 
 	const handleDeleteNote = useCallback(async (id) => {
-		const noteId = id || activeNoteId;
+		const currentActiveId = activeNoteIdRef.current;
+		const noteId = id || currentActiveId;
 		if (!noteId) return;
 		await window.api.deleteNote(noteId);
 		const updatedNotes = await loadNotes();
 
-		if (noteId === activeNoteId) {
+		if (noteId === currentActiveId) {
 			if (updatedNotes.length > 0) {
 				const first = updatedNotes[0];
 				setActiveNoteId(first.id);
@@ -142,7 +159,7 @@ export default function App() {
 				setContent("");
 			}
 		}
-	}, [activeNoteId]);
+	}, [loadNotes]);
 
 	return (
 		<TooltipProvider>
@@ -152,7 +169,6 @@ export default function App() {
 						<Sidebar
 							notes={notes}
 							activeNoteId={activeNoteId}
-							activeContent={content}
 							onSelectNote={handleSelectNote}
 							onNewNote={handleNewNote}
 							onDuplicateNote={handleDuplicateNote}

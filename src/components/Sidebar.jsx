@@ -2,10 +2,9 @@ import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import React from "react";
 import NoteItem from "./NoteItem";
 
-export default function Sidebar({
+const Sidebar = React.memo(function Sidebar({
 	notes,
 	activeNoteId,
-	activeContent,
 	onSelectNote,
 	onNewNote,
 	onDuplicateNote,
@@ -30,9 +29,6 @@ export default function Sidebar({
 										key={note.id}
 										note={note}
 										isActive={note.id === activeNoteId}
-										liveContent={
-											note.id === activeNoteId ? activeContent : null
-										}
 										onSelect={onSelectNote}
 										onNewNote={onNewNote}
 										onDuplicate={onDuplicateNote}
@@ -46,4 +42,6 @@ export default function Sidebar({
 			</div>
 		</motion.aside>
 	);
-}
+});
+
+export default Sidebar;

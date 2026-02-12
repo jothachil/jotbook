@@ -26,10 +26,9 @@ import {
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/utils/formatDate";
 
-export default function NoteItem({
+const NoteItem = React.memo(function NoteItem({
 	note,
 	isActive,
-	liveContent,
 	onSelect,
 	onNewNote,
 	onDuplicate,
@@ -114,4 +113,6 @@ export default function NoteItem({
 			</AlertDialog>
 		</>
 	);
-}
+});
+
+export default NoteItem;
