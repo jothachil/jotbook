@@ -2,6 +2,8 @@
 
 A minimal, fast desktop note-taking app built with Electron and React. Notes are stored locally in SQLite and auto-saved as you type.
 
+![Jotbook](https://res.cloudinary.com/drch6exvq/image/upload/v1770898129/Jotbook/Jotbook.jpg)
+
 ## Features
 
 - **Auto-save** — Notes save automatically with a 600ms debounce, so nothing is lost.
