@@ -1,4 +1,4 @@
-import { Suspense, forwardRef, lazy } from "react";
+import { forwardRef, lazy, Suspense } from "react";
 
 const MarkdownPreview = lazy(() => import("@/components/MarkdownPreview"));
 
