@@ -1,7 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
 
-@custom-variant dark (&prefers-color-scheme: dark);
+@custom-variant dark (&:is(.dark, .dark *));
 
 :root {
   --background: var(--color-neutral-950);

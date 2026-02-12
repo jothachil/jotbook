@@ -1,12 +1,13 @@
 import {
 	IconCopy,
 	IconDownload,
+	IconEye,
 	IconLayoutSidebar,
+	IconPencil,
 	IconPlus,
 	IconTrash,
 } from "@tabler/icons-react";
 import { motion } from "framer-motion";
-import React from "react";
 import DeleteNoteDialog from "@/components/DeleteNoteDialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -16,7 +17,9 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-function ToolbarButton({ icon: Icon, label, onClick, destructive }) {
+/* ── Helpers ─────────────────────────────────────── */
+
+function ToolbarButton({ icon: Icon, label, onClick, destructive, shortcut }) {
 	return (
 		<Tooltip>
 			<TooltipTrigger asChild>
@@ -29,73 +32,114 @@ function ToolbarButton({ icon: Icon, label, onClick, destructive }) {
 					<Icon className="size-3.5" />
 				</Button>
 			</TooltipTrigger>
-			<TooltipContent side="bottom">{label}</TooltipContent>
+			<TooltipContent side="bottom">
+				{label}
+				{shortcut && (
+					<span className="text-muted-foreground ml-1">{shortcut}</span>
+				)}
+			</TooltipContent>
 		</Tooltip>
 	);
 }
+
+function ToolbarGroup({ children }) {
+	return <div className="flex items-center gap-0.5">{children}</div>;
+}
+
+function ToolbarDivider() {
+	return <Separator orientation="vertical" className="mx-1.5 h-4" />;
+}
+
+/* ── Toolbar ─────────────────────────────────────── */
 
 export default function Toolbar({
 	sidebarOpen,
 	onToggleSidebar,
 	activeNoteId,
+	previewMode,
+	onTogglePreview,
 	onNewNote,
 	onDuplicateNote,
 	onDeleteNote,
 }) {
 	return (
 		<div className="h-[45px] flex items-end px-4 pb-2 drag-region border-b border-neutral-800">
-			{/* Left: sidebar toggle */}
+			{/* Left: navigation */}
 			<motion.div
 				className="no-drag flex items-center"
 				animate={{ marginLeft: sidebarOpen ? 0 : 72 }}
 				transition={{ type: "spring", stiffness: 400, damping: 30 }}
 			>
-				<Tooltip>
-					<TooltipTrigger asChild>
-						<Button
-							variant="ghost"
-							size="icon-xs"
-							onClick={onToggleSidebar}
-							className="cursor-pointer text-muted-foreground/40 hover:text-foreground"
-						>
-							<IconLayoutSidebar className="size-4" />
-						</Button>
-					</TooltipTrigger>
-					<TooltipContent side="bottom">
-						{sidebarOpen ? "Hide sidebar" : "Show sidebar"}{" "}
-						<span className="text-muted-foreground ml-1">⌘B</span>
-					</TooltipContent>
-				</Tooltip>
+				<ToolbarButton
+					icon={IconLayoutSidebar}
+					label={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
+					shortcut="⌘B"
+					onClick={onToggleSidebar}
+				/>
 			</motion.div>
 
-			{/* Right: note actions */}
-			<div className="ml-auto flex items-center gap-0.5 no-drag">
-				<ToolbarButton icon={IconPlus} label="New note" onClick={onNewNote} />
-
+			{/* Right: actions */}
+			<div className="ml-auto flex items-center no-drag">
+				{/* View mode toggle */}
 				{activeNoteId && (
 					<>
-						<ToolbarButton
-							icon={IconCopy}
-							label="Duplicate"
-							onClick={() => onDuplicateNote(activeNoteId)}
-						/>
-						<ToolbarButton
-							icon={IconDownload}
-							label="Export markdown"
-							onClick={() => window.api.exportNote(activeNoteId)}
-						/>
+						<ToolbarGroup>
+							<ToolbarButton
+								icon={previewMode ? IconPencil : IconEye}
+								label={previewMode ? "Edit" : "Preview"}
+								onClick={onTogglePreview}
+							/>
+						</ToolbarGroup>
+						<ToolbarDivider />
+					</>
+				)}
 
-						<Separator orientation="vertical" className="mx-1 h-4" />
+				{/* Create & manage */}
+				<ToolbarGroup>
+					<ToolbarButton
+						icon={IconPlus}
+						label="New note"
+						shortcut="⌘N"
+						onClick={onNewNote}
+					/>
+					{activeNoteId && (
+						<>
+							<ToolbarButton
+								icon={IconCopy}
+								label="Duplicate"
+								onClick={() => onDuplicateNote(activeNoteId)}
+							/>
+							<ToolbarButton
+								icon={IconDownload}
+								label="Export markdown"
+								onClick={() => window.api.exportNote(activeNoteId)}
+							/>
+						</>
+					)}
+				</ToolbarGroup>
 
-						<DeleteNoteDialog onConfirm={() => onDeleteNote(activeNoteId)}>
-							<Button
-								variant="ghost"
-								size="icon-xs"
-								className="cursor-pointer text-muted-foreground/40 hover:text-destructive"
-							>
-								<IconTrash className="size-3.5" />
-							</Button>
-						</DeleteNoteDialog>
+				{/* Destructive */}
+				{activeNoteId && (
+					<>
+						<ToolbarDivider />
+						<ToolbarGroup>
+							<Tooltip>
+								<DeleteNoteDialog
+									onConfirm={() => onDeleteNote(activeNoteId)}
+								>
+									<TooltipTrigger asChild>
+										<Button
+											variant="ghost"
+											size="icon-xs"
+											className="cursor-pointer text-muted-foreground/40 hover:text-destructive"
+										>
+											<IconTrash className="size-3.5" />
+										</Button>
+									</TooltipTrigger>
+								</DeleteNoteDialog>
+								<TooltipContent side="bottom">Delete</TooltipContent>
+							</Tooltip>
+						</ToolbarGroup>
 					</>
 				)}
 			</div>

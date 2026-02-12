@@ -11,6 +11,7 @@ export default function App() {
 	const [activeNoteId, setActiveNoteId] = useState(null);
 	const [content, setContent] = useState("");
 	const [sidebarOpen, setSidebarOpen] = useState(true);
+	const [previewMode, setPreviewMode] = useState(false);
 	const editorRef = useRef(null);
 	const saveTimeoutRef = useRef(null);
 	const hasBumpedRef = useRef(false);
@@ -158,6 +159,8 @@ export default function App() {
 						sidebarOpen={sidebarOpen}
 						onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
 						activeNoteId={activeNoteId}
+						previewMode={previewMode}
+						onTogglePreview={() => setPreviewMode((prev) => !prev)}
 						onNewNote={handleNewNote}
 						onDuplicateNote={handleDuplicateNote}
 						onDeleteNote={handleDeleteNote}
@@ -174,6 +177,7 @@ export default function App() {
 								onScheduleSave={scheduleSave}
 								activeNoteId={activeNoteId}
 								updatedAt={notes.find((n) => n.id === activeNoteId)?.updated_at}
+								previewMode={previewMode}
 							/>
 						)}
 					</div>

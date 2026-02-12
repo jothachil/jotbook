@@ -1,8 +1,9 @@
 import React, { forwardRef, useCallback, useMemo } from "react";
 import { formatDateFull } from "@/utils/formatDate";
+import MarkdownPreview from "@/components/MarkdownPreview";
 
 const Editor = forwardRef(function Editor(
-	{ content, onChange, onScheduleSave, activeNoteId, updatedAt },
+	{ content, onChange, onScheduleSave, activeNoteId, updatedAt, previewMode },
 	ref,
 ) {
 	const handleTabKey = useCallback(
@@ -49,15 +50,19 @@ const Editor = forwardRef(function Editor(
 					</span>
 				</div>
 			)}
-			<textarea
-				ref={ref}
-				value={content}
-				onChange={handleChange}
-				onKeyDown={handleTabKey}
-				className="flex-1 w-full bg-transparent resize-none outline-none px-7 py-4 text-[15px] leading-relaxed text-foreground/80 placeholder-muted-foreground/25 editor-textarea"
-				placeholder="Start writing..."
-				spellCheck={false}
-			/>
+			{previewMode ? (
+				<MarkdownPreview content={content} />
+			) : (
+				<textarea
+					ref={ref}
+					value={content}
+					onChange={handleChange}
+					onKeyDown={handleTabKey}
+					className="flex-1 w-full bg-transparent resize-none outline-none px-7 py-4 text-[15px] leading-relaxed text-foreground/80 placeholder-muted-foreground/25 editor-textarea"
+					placeholder="Start writing..."
+					spellCheck={false}
+				/>
+			)}
 		</div>
 	);
 });
