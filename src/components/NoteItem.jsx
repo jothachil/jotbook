@@ -1,9 +1,7 @@
-import {
-	IconCopy,
-	IconDownload,
-	IconPlus,
-	IconTrash,
-} from "@tabler/icons-react";
+import IconCopy from "@tabler/icons-react/dist/esm/icons/IconCopy.mjs";
+import IconDownload from "@tabler/icons-react/dist/esm/icons/IconDownload.mjs";
+import IconPlus from "@tabler/icons-react/dist/esm/icons/IconPlus.mjs";
+import IconTrash from "@tabler/icons-react/dist/esm/icons/IconTrash.mjs";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import {
@@ -50,7 +48,7 @@ function NoteItem({
 						}}
 						onClick={() => onSelect(note.id)}
 						className={cn(
-							"w-full min-w-0 text-left px-3 py-2.5 rounded-md cursor-pointer transition-colors overflow-hidden",
+							"note-item w-full min-w-0 text-left px-3 py-2.5 rounded-md cursor-pointer transition-colors overflow-hidden",
 							isActive
 								? "bg-sidebar-accent text-sidebar-accent-foreground"
 								: "text-muted-foreground hover:bg-accent/50",

@@ -1,5 +1,6 @@
-import { forwardRef } from "react";
-import MarkdownPreview from "@/components/MarkdownPreview";
+import { Suspense, forwardRef, lazy } from "react";
+
+const MarkdownPreview = lazy(() => import("@/components/MarkdownPreview"));
 
 const Editor = forwardRef(function Editor(
 	{ content, onChange, onScheduleSave, activeNoteId, previewMode },
@@ -30,7 +31,15 @@ const Editor = forwardRef(function Editor(
 	return (
 		<div className="absolute inset-0 flex flex-col">
 			{previewMode ? (
-				<MarkdownPreview content={content} />
+				<Suspense
+					fallback={
+						<div className="px-7 py-4 text-sm text-muted-foreground/40">
+							Loading preview...
+						</div>
+					}
+				>
+					<MarkdownPreview content={content} />
+				</Suspense>
 			) : (
 				<textarea
 					ref={ref}

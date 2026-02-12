@@ -1,6 +1,6 @@
 import { Toast } from "@base-ui/react/toast";
 import { AnimatePresence } from "framer-motion";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Editor from "@/components/Editor";
 import EmptyState from "@/components/EmptyState";
 import Sidebar from "@/components/Sidebar";
@@ -10,8 +10,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 const toastManager = Toast.createToastManager();
 
+/* ── Hoisted constants & RegExp (js-hoist-regexp) ── */
+const AUTO_SIDEBAR_CLOSE_WIDTH = 900;
+const TITLE_HEADING_RE = /^#+\s*/;
+const WHITESPACE_RE = /\s+/;
+
 export default function App() {
-	const AUTO_SIDEBAR_CLOSE_WIDTH = 900;
 	const [notes, setNotes] = useState([]);
 	const [activeNoteId, setActiveNoteId] = useState(null);
 	const [content, setContent] = useState("");
@@ -24,9 +28,7 @@ export default function App() {
 	const contentRef = useRef("");
 	const activeNoteIdRef = useRef(null);
 	const handleNewNoteRef = useRef(null);
-	const lastWindowWidthRef = useRef(
-		typeof window !== "undefined" ? window.innerWidth : 0,
-	);
+	const lastWindowWidthRef = useRef(window.innerWidth);
 
 	const loadNotes = async () => {
 		const data = await window.api.getNotes();
@@ -34,10 +36,12 @@ export default function App() {
 		return data;
 	};
 
-	// Load all notes on mount
+	// Load all notes on mount — loadNotes only depends on stable setNotes,
+	// so intentionally omitting it to run only once on mount.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: mount-only effect
 	useEffect(() => {
 		loadNotes();
-	}, [loadNotes]);
+	}, []);
 
 	useEffect(() => {
 		const handleResize = () => {
@@ -80,6 +84,12 @@ export default function App() {
 		return () => document.removeEventListener("keydown", handleKeyDown);
 	}, []);
 
+	/** Extract title from the first line of markdown content. */
+	const extractTitle = (text) => {
+		const firstLine = text.split("\n")[0] || "";
+		return firstLine.replace(TITLE_HEADING_RE, "").trim() || "Untitled";
+	};
+
 	// Auto-save with debounce — bumps note to top once per editing session
 	const scheduleSave = (noteId, newContent) => {
 		isDirtyRef.current = true;
@@ -96,8 +106,7 @@ export default function App() {
 		}
 
 		saveTimeoutRef.current = setTimeout(async () => {
-			const firstLine = newContent.split("\n")[0] || "";
-			const title = firstLine.replace(/^#+\s*/, "").trim() || "Untitled";
+			const title = extractTitle(newContent);
 			await window.api.updateNote(noteId, title, newContent);
 			const now = new Date().toISOString().replace("Z", "").replace("T", " ");
 			setNotes((prev) =>
@@ -115,21 +124,26 @@ export default function App() {
 		}
 		if (!noteId || !isDirtyRef.current) return;
 		isDirtyRef.current = false;
-		const firstLine = currentContent.split("\n")[0] || "";
-		const title = firstLine.replace(/^#+\s*/, "").trim() || "Untitled";
+		const title = extractTitle(currentContent);
 		await window.api.updateNote(noteId, title, currentContent);
 	};
 
+	// async-parallel: flush save & fetch next note in parallel
 	const handleSelectNote = async (id) => {
 		const currentActiveId = activeNoteIdRef.current;
 		const currentContent = contentRef.current;
-		if (currentActiveId) {
-			await flushSave(currentActiveId, currentContent);
-		}
+
 		hasBumpedRef.current = false;
 		isDirtyRef.current = false;
 		setActiveNoteId(id);
-		const note = await window.api.getNote(id);
+
+		const [, note] = await Promise.all([
+			currentActiveId
+				? flushSave(currentActiveId, currentContent)
+				: Promise.resolve(),
+			window.api.getNote(id),
+		]);
+
 		if (note) {
 			setContent(note.content || "");
 			setTimeout(() => editorRef.current?.focus(), 0);
@@ -180,7 +194,7 @@ export default function App() {
 	};
 
 	const activeNote = notes.find((n) => n.id === activeNoteId);
-	const words = content.trim().split(/\s+/).filter(Boolean);
+	const words = content.trim().split(WHITESPACE_RE).filter(Boolean);
 	const wordCount = words.length;
 
 	const handleDeleteNote = async (id) => {
@@ -235,7 +249,7 @@ export default function App() {
 						/>
 
 						<div className="flex-1 overflow-hidden relative">
-							{!activeNoteId ? (
+							{activeNoteId == null ? (
 								<EmptyState />
 							) : (
 								<Editor

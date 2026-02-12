@@ -1,5 +1,5 @@
 import { Toast } from "@base-ui/react/toast";
-import { IconX } from "@tabler/icons-react";
+import IconX from "@tabler/icons-react/dist/esm/icons/IconX.mjs";
 
 export default function ToastHost() {
 	const { toasts } = Toast.useToastManager();

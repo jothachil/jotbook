@@ -1,5 +1,4 @@
-import { IconFileText } from "@tabler/icons-react";
-import React from "react";
+import IconFileText from "@tabler/icons-react/dist/esm/icons/IconFileText.mjs";
 
 export default function EmptyState() {
 	return (

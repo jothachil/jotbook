@@ -1,12 +1,10 @@
-import {
-	IconClipboard,
-	IconDownload,
-	IconEye,
-	IconLayoutSidebar,
-	IconPencil,
-	IconPlus,
-	IconTrash,
-} from "@tabler/icons-react";
+import IconClipboard from "@tabler/icons-react/dist/esm/icons/IconClipboard.mjs";
+import IconDownload from "@tabler/icons-react/dist/esm/icons/IconDownload.mjs";
+import IconEye from "@tabler/icons-react/dist/esm/icons/IconEye.mjs";
+import IconLayoutSidebar from "@tabler/icons-react/dist/esm/icons/IconLayoutSidebar.mjs";
+import IconPencil from "@tabler/icons-react/dist/esm/icons/IconPencil.mjs";
+import IconPlus from "@tabler/icons-react/dist/esm/icons/IconPlus.mjs";
+import IconTrash from "@tabler/icons-react/dist/esm/icons/IconTrash.mjs";
 import { motion } from "framer-motion";
 import DeleteNoteDialog from "@/components/DeleteNoteDialog";
 import { Button } from "@/components/ui/button";
@@ -16,7 +14,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { formatDateFull } from "@/utils/formatDate";
+import { formatDate } from "@/utils/formatDate";
 
 /* ── Helpers ─────────────────────────────────────── */
 
@@ -43,15 +41,11 @@ function ToolbarButton({ icon: Icon, label, onClick, destructive, shortcut }) {
 	);
 }
 
-function ToolbarGroup({ children }) {
-	return <div className="flex items-center gap-0.5">{children}</div>;
-}
-
 function ToolbarDivider() {
 	return (
 		<Separator
 			orientation="vertical"
-			className="mx-1.5 !h-2 !w-px bg-neutral-800"
+			className="mx-1.5 h-2! w-px! bg-neutral-800"
 		/>
 	);
 }
@@ -86,20 +80,20 @@ export default function Toolbar({
 				/>
 			</motion.div>
 
-			{/* Center: date & word count */}
-			{activeNoteId && updatedAt && (
+			{/* Center: date & word count (rendering-conditional-render: explicit null check) */}
+			{activeNoteId != null && updatedAt ? (
 				<div className="ml-2  flex items-center gap-1 text-[13px] text-muted-foreground/40 select-none no-drag">
-					<span>{formatDateFull(updatedAt)}</span>
+					<span>{formatDate(updatedAt)}</span>
 					<span>&middot;</span>
 					<span>
 						{wordCount} {wordCount === 1 ? "word" : "words"}
 					</span>
 				</div>
-			)}
+			) : null}
 
 			{/* Right: actions */}
 			<div className="ml-auto flex items-center gap-1 no-drag">
-				{activeNoteId && (
+				{activeNoteId != null ? (
 					<>
 						<ToolbarButton
 							icon={previewMode ? IconPencil : IconEye}
@@ -108,7 +102,7 @@ export default function Toolbar({
 						/>
 						<ToolbarDivider />
 					</>
-				)}
+				) : null}
 
 				<ToolbarButton
 					icon={IconPlus}
@@ -117,7 +111,7 @@ export default function Toolbar({
 					onClick={onNewNote}
 				/>
 
-				{activeNoteId && (
+				{activeNoteId != null ? (
 					<>
 						<ToolbarButton
 							icon={IconClipboard}
@@ -145,7 +139,7 @@ export default function Toolbar({
 							<TooltipContent side="bottom">Delete</TooltipContent>
 						</Tooltip>
 					</>
-				)}
+				) : null}
 			</div>
 		</div>
 	);
