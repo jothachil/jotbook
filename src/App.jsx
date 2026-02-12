@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import Editor from "@/components/Editor";
 import EmptyState from "@/components/EmptyState";
@@ -119,6 +119,12 @@ export default function App() {
 		}
 	}, []);
 
+	const activeNote = notes.find((n) => n.id === activeNoteId);
+	const wordCount = useMemo(() => {
+		const words = content.trim().split(/\s+/).filter(Boolean);
+		return words.length;
+	}, [content]);
+
 	const handleDeleteNote = useCallback(async (id) => {
 		const noteId = id || activeNoteId;
 		if (!noteId) return;
@@ -146,6 +152,7 @@ export default function App() {
 						<Sidebar
 							notes={notes}
 							activeNoteId={activeNoteId}
+							activeContent={content}
 							onSelectNote={handleSelectNote}
 							onNewNote={handleNewNote}
 							onDuplicateNote={handleDuplicateNote}
@@ -154,7 +161,7 @@ export default function App() {
 					)}
 				</AnimatePresence>
 
-				<main className="flex-1 flex flex-col min-w-0">
+				<main className="flex-1 flex flex-col min-w-0 bg-background">
 					<Toolbar
 						sidebarOpen={sidebarOpen}
 						onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
@@ -164,6 +171,8 @@ export default function App() {
 						onNewNote={handleNewNote}
 						onDuplicateNote={handleDuplicateNote}
 						onDeleteNote={handleDeleteNote}
+						updatedAt={activeNote?.updated_at}
+						wordCount={wordCount}
 					/>
 
 					<div className="flex-1 overflow-hidden relative">
@@ -176,7 +185,6 @@ export default function App() {
 								onChange={setContent}
 								onScheduleSave={scheduleSave}
 								activeNoteId={activeNoteId}
-								updatedAt={notes.find((n) => n.id === activeNoteId)?.updated_at}
 								previewMode={previewMode}
 							/>
 						)}

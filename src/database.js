@@ -26,7 +26,7 @@ export function initDatabase() {
 }
 
 export function getAllNotes() {
-  return db.prepare('SELECT id, title, updated_at FROM notes ORDER BY updated_at DESC').all();
+  return db.prepare('SELECT id, title, content, updated_at FROM notes ORDER BY updated_at DESC').all();
 }
 
 export function getNote(id) {

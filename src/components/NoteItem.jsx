@@ -29,6 +29,7 @@ import { formatDate } from "@/utils/formatDate";
 export default function NoteItem({
 	note,
 	isActive,
+	liveContent,
 	onSelect,
 	onNewNote,
 	onDuplicate,
@@ -64,7 +65,7 @@ export default function NoteItem({
 						>
 							{note.title || "Untitled"}
 						</div>
-						<div className="text-[11px] text-muted-foreground/50 mt-0.5">
+						<div className="text-[12px] text-neutral-500 mt-0.5">
 							{formatDate(note.updated_at)}
 						</div>
 					</motion.button>
@@ -74,6 +75,7 @@ export default function NoteItem({
 						<IconPlus className="size-4" />
 						New Note
 					</ContextMenuItem>
+					<ContextMenuSeparator />
 					<ContextMenuItem onClick={() => onDuplicate(note.id)}>
 						<IconCopy className="size-4" />
 						Duplicate

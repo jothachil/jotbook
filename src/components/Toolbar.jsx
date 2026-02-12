@@ -16,6 +16,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { formatDateFull } from "@/utils/formatDate";
 
 /* ── Helpers ─────────────────────────────────────── */
 
@@ -27,9 +28,9 @@ function ToolbarButton({ icon: Icon, label, onClick, destructive, shortcut }) {
 					variant="ghost"
 					size="icon-xs"
 					onClick={onClick}
-					className={`cursor-pointer ${destructive ? "text-muted-foreground/40 hover:text-destructive" : "text-muted-foreground/40 hover:text-foreground"}`}
+					className={`cursor-pointer ${destructive ? "text-neutral-500 hover:text-destructive" : "text-neutral-500 hover:text-foreground"}`}
 				>
-					<Icon className="size-3.5" />
+					<Icon className="size-4" />
 				</Button>
 			</TooltipTrigger>
 			<TooltipContent side="bottom">
@@ -47,7 +48,12 @@ function ToolbarGroup({ children }) {
 }
 
 function ToolbarDivider() {
-	return <Separator orientation="vertical" className="mx-1.5 h-4" />;
+	return (
+		<Separator
+			orientation="vertical"
+			className="mx-1.5 !h-2 !w-px bg-neutral-800"
+		/>
+	);
 }
 
 /* ── Toolbar ─────────────────────────────────────── */
@@ -61,9 +67,11 @@ export default function Toolbar({
 	onNewNote,
 	onDuplicateNote,
 	onDeleteNote,
+	updatedAt,
+	wordCount,
 }) {
 	return (
-		<div className="h-[45px] flex items-end px-4 pb-2 drag-region border-b border-neutral-800">
+		<div className="h-[46px] flex items-center   px-4 p-2 drag-region border-b border-neutral-800/80">
 			{/* Left: navigation */}
 			<motion.div
 				className="no-drag flex items-center"
@@ -78,66 +86,64 @@ export default function Toolbar({
 				/>
 			</motion.div>
 
+			{/* Center: date & word count */}
+			{activeNoteId && updatedAt && (
+				<div className="ml-2  flex items-center gap-1 text-[13px] text-muted-foreground/40 select-none no-drag">
+					<span>{formatDateFull(updatedAt)}</span>
+					<span>&middot;</span>
+					<span>
+						{wordCount} {wordCount === 1 ? "word" : "words"}
+					</span>
+				</div>
+			)}
+
 			{/* Right: actions */}
-			<div className="ml-auto flex items-center no-drag">
-				{/* View mode toggle */}
+			<div className="ml-auto flex items-center gap-1 no-drag">
 				{activeNoteId && (
 					<>
-						<ToolbarGroup>
-							<ToolbarButton
-								icon={previewMode ? IconPencil : IconEye}
-								label={previewMode ? "Edit" : "Preview"}
-								onClick={onTogglePreview}
-							/>
-						</ToolbarGroup>
+						<ToolbarButton
+							icon={previewMode ? IconPencil : IconEye}
+							label={previewMode ? "Edit" : "Preview"}
+							onClick={onTogglePreview}
+						/>
 						<ToolbarDivider />
 					</>
 				)}
 
-				{/* Create & manage */}
-				<ToolbarGroup>
-					<ToolbarButton
-						icon={IconPlus}
-						label="New note"
-						shortcut="⌘N"
-						onClick={onNewNote}
-					/>
-					{activeNoteId && (
-						<>
-							<ToolbarButton
-								icon={IconCopy}
-								label="Duplicate"
-								onClick={() => onDuplicateNote(activeNoteId)}
-							/>
-							<ToolbarButton
-								icon={IconDownload}
-								label="Export markdown"
-								onClick={() => window.api.exportNote(activeNoteId)}
-							/>
-						</>
-					)}
-				</ToolbarGroup>
+				<ToolbarButton
+					icon={IconPlus}
+					label="New note"
+					shortcut="⌘N"
+					onClick={onNewNote}
+				/>
 
-				{/* Destructive */}
 				{activeNoteId && (
 					<>
+						<ToolbarButton
+							icon={IconCopy}
+							label="Duplicate"
+							onClick={() => onDuplicateNote(activeNoteId)}
+						/>
+						<ToolbarButton
+							icon={IconDownload}
+							label="Export markdown"
+							onClick={() => window.api.exportNote(activeNoteId)}
+						/>
 						<ToolbarDivider />
-						<ToolbarGroup>
-							<Tooltip>
-								<DeleteNoteDialog onConfirm={() => onDeleteNote(activeNoteId)}>
-									<TooltipTrigger asChild>
-										<Button
-											variant="ghost"
-											size="icon-xs"
-											className="cursor-pointer text-muted-foreground/40 hover:text-destructive"
-										>
-											<IconTrash className="size-3.5" />
-										</Button>
-									</TooltipTrigger>
-								</DeleteNoteDialog>
-								<TooltipContent side="bottom">Delete</TooltipContent>
-							</Tooltip>
-						</ToolbarGroup>
+						<Tooltip>
+							<DeleteNoteDialog onConfirm={() => onDeleteNote(activeNoteId)}>
+								<TooltipTrigger asChild>
+									<Button
+										variant="ghost"
+										size="icon-xs"
+										className="cursor-pointer text-neutral-500 hover:text-destructive"
+									>
+										<IconTrash className="size-4" />
+									</Button>
+								</TooltipTrigger>
+							</DeleteNoteDialog>
+							<TooltipContent side="bottom">Delete</TooltipContent>
+						</Tooltip>
 					</>
 				)}
 			</div>

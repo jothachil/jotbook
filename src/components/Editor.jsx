@@ -1,9 +1,8 @@
-import React, { forwardRef, useCallback, useMemo } from "react";
-import { formatDateFull } from "@/utils/formatDate";
+import React, { forwardRef, useCallback } from "react";
 import MarkdownPreview from "@/components/MarkdownPreview";
 
 const Editor = forwardRef(function Editor(
-	{ content, onChange, onScheduleSave, activeNoteId, updatedAt, previewMode },
+	{ content, onChange, onScheduleSave, activeNoteId, previewMode },
 	ref,
 ) {
 	const handleTabKey = useCallback(
@@ -34,22 +33,8 @@ const Editor = forwardRef(function Editor(
 		[activeNoteId, onChange, onScheduleSave],
 	);
 
-	const wordCount = useMemo(() => {
-		const words = content.trim().split(/\s+/).filter(Boolean);
-		return words.length;
-	}, [content]);
-
 	return (
 		<div className="absolute inset-0 flex flex-col">
-			{updatedAt && (
-				<div className="px-7 pt-5 pb-0 flex items-center gap-1 text-[13px] text-muted-foreground/40 select-none">
-					<span>{formatDateFull(updatedAt)}</span>
-					<span>&middot;</span>
-					<span>
-						{wordCount} {wordCount === 1 ? "word" : "words"}
-					</span>
-				</div>
-			)}
 			{previewMode ? (
 				<MarkdownPreview content={content} />
 			) : (
