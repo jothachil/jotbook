@@ -124,9 +124,7 @@ export default function Toolbar({
 						<ToolbarDivider />
 						<ToolbarGroup>
 							<Tooltip>
-								<DeleteNoteDialog
-									onConfirm={() => onDeleteNote(activeNoteId)}
-								>
+								<DeleteNoteDialog onConfirm={() => onDeleteNote(activeNoteId)}>
 									<TooltipTrigger asChild>
 										<Button
 											variant="ghost"
