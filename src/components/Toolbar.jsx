@@ -1,5 +1,5 @@
 import {
-	IconCopy,
+	IconClipboard,
 	IconDownload,
 	IconEye,
 	IconLayoutSidebar,
@@ -65,7 +65,7 @@ export default function Toolbar({
 	previewMode,
 	onTogglePreview,
 	onNewNote,
-	onDuplicateNote,
+	onCopyMarkdown,
 	onDeleteNote,
 	updatedAt,
 	wordCount,
@@ -120,9 +120,9 @@ export default function Toolbar({
 				{activeNoteId && (
 					<>
 						<ToolbarButton
-							icon={IconCopy}
-							label="Duplicate"
-							onClick={() => onDuplicateNote(activeNoteId)}
+							icon={IconClipboard}
+							label="Copy markdown"
+							onClick={onCopyMarkdown}
 						/>
 						<ToolbarButton
 							icon={IconDownload}

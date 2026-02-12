@@ -1,12 +1,23 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Toast } from "@base-ui/react/toast";
 import { AnimatePresence } from "framer-motion";
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import Editor from "@/components/Editor";
 import EmptyState from "@/components/EmptyState";
 import Sidebar from "@/components/Sidebar";
+import ToastHost from "@/components/ToastHost";
 import Toolbar from "@/components/Toolbar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
+const toastManager = Toast.createToastManager();
+
 export default function App() {
+	const AUTO_SIDEBAR_CLOSE_WIDTH = 900;
 	const [notes, setNotes] = useState([]);
 	const [activeNoteId, setActiveNoteId] = useState(null);
 	const [content, setContent] = useState("");
@@ -18,6 +29,9 @@ export default function App() {
 	const contentRef = useRef("");
 	const activeNoteIdRef = useRef(null);
 	const handleNewNoteRef = useRef(null);
+	const lastWindowWidthRef = useRef(
+		typeof window !== "undefined" ? window.innerWidth : 0,
+	);
 
 	const loadNotes = useCallback(async () => {
 		const data = await window.api.getNotes();
@@ -29,6 +43,23 @@ export default function App() {
 	useEffect(() => {
 		loadNotes();
 	}, [loadNotes]);
+
+	useEffect(() => {
+		const handleResize = () => {
+			const currentWidth = window.innerWidth;
+			const wasLarge = lastWindowWidthRef.current >= AUTO_SIDEBAR_CLOSE_WIDTH;
+			const isNowSmall = currentWidth < AUTO_SIDEBAR_CLOSE_WIDTH;
+			if (wasLarge && isNowSmall) {
+				setSidebarOpen(false);
+			}
+			lastWindowWidthRef.current = currentWidth;
+		};
+		if (lastWindowWidthRef.current < AUTO_SIDEBAR_CLOSE_WIDTH) {
+			setSidebarOpen(false);
+		}
+		window.addEventListener("resize", handleResize);
+		return () => window.removeEventListener("resize", handleResize);
+	}, []);
 
 	useEffect(() => {
 		contentRef.current = content;
@@ -74,7 +105,9 @@ export default function App() {
 			await window.api.updateNote(noteId, title, newContent);
 			const now = new Date().toISOString().replace("Z", "").replace("T", " ");
 			setNotes((prev) =>
-				prev.map((n) => (n.id === noteId ? { ...n, title, updated_at: now } : n)),
+				prev.map((n) =>
+					n.id === noteId ? { ...n, title, updated_at: now } : n,
+				),
 			);
 		}, 600);
 	}, []);
@@ -123,17 +156,36 @@ export default function App() {
 	}, [flushSave, loadNotes]);
 	handleNewNoteRef.current = handleNewNote;
 
-	const handleDuplicateNote = useCallback(async (id) => {
-		if (!id) return;
-		const note = await window.api.duplicateNote(id);
-		if (note) {
-			await loadNotes();
-			hasBumpedRef.current = true;
-			setActiveNoteId(note.id);
-			setContent(note.content || "");
-			setTimeout(() => editorRef.current?.focus(), 0);
+	const handleDuplicateNote = useCallback(
+		async (id) => {
+			if (!id) return;
+			const note = await window.api.duplicateNote(id);
+			if (note) {
+				await loadNotes();
+				hasBumpedRef.current = true;
+				setActiveNoteId(note.id);
+				setContent(note.content || "");
+				setTimeout(() => editorRef.current?.focus(), 0);
+			}
+		},
+		[loadNotes],
+	);
+
+	const handleCopyMarkdown = useCallback(async () => {
+		const currentActiveId = activeNoteIdRef.current;
+		const currentContent = contentRef.current;
+		if (!currentActiveId) return;
+		if (!navigator?.clipboard?.writeText) return;
+		try {
+			await navigator.clipboard.writeText(currentContent || "");
+			toastManager.add({
+				description: "Markdown copied",
+				timeout: 1500,
+			});
+		} catch {
+			// Ignore clipboard failures to avoid blocking UI
 		}
-	}, [loadNotes]);
+	}, []);
 
 	const activeNote = notes.find((n) => n.id === activeNoteId);
 	const wordCount = useMemo(() => {
@@ -141,72 +193,78 @@ export default function App() {
 		return words.length;
 	}, [content]);
 
-	const handleDeleteNote = useCallback(async (id) => {
-		const currentActiveId = activeNoteIdRef.current;
-		const noteId = id || currentActiveId;
-		if (!noteId) return;
-		await window.api.deleteNote(noteId);
-		const updatedNotes = await loadNotes();
+	const handleDeleteNote = useCallback(
+		async (id) => {
+			const currentActiveId = activeNoteIdRef.current;
+			const noteId = id || currentActiveId;
+			if (!noteId) return;
+			await window.api.deleteNote(noteId);
+			const updatedNotes = await loadNotes();
 
-		if (noteId === currentActiveId) {
-			if (updatedNotes.length > 0) {
-				const first = updatedNotes[0];
-				setActiveNoteId(first.id);
-				const note = await window.api.getNote(first.id);
-				setContent(note?.content || "");
-			} else {
-				setActiveNoteId(null);
-				setContent("");
+			if (noteId === currentActiveId) {
+				if (updatedNotes.length > 0) {
+					const first = updatedNotes[0];
+					setActiveNoteId(first.id);
+					const note = await window.api.getNote(first.id);
+					setContent(note?.content || "");
+				} else {
+					setActiveNoteId(null);
+					setContent("");
+				}
 			}
-		}
-	}, [loadNotes]);
+		},
+		[loadNotes],
+	);
 
 	return (
-		<TooltipProvider>
-			<div className="flex h-screen overflow-hidden">
-				<AnimatePresence initial={false}>
-					{sidebarOpen && (
-						<Sidebar
-							notes={notes}
-							activeNoteId={activeNoteId}
-							onSelectNote={handleSelectNote}
-							onNewNote={handleNewNote}
-							onDuplicateNote={handleDuplicateNote}
-							onDeleteNote={handleDeleteNote}
-						/>
-					)}
-				</AnimatePresence>
-
-				<main className="flex-1 flex flex-col min-w-0 bg-background">
-					<Toolbar
-						sidebarOpen={sidebarOpen}
-						onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
-						activeNoteId={activeNoteId}
-						previewMode={previewMode}
-						onTogglePreview={() => setPreviewMode((prev) => !prev)}
-						onNewNote={handleNewNote}
-						onDuplicateNote={handleDuplicateNote}
-						onDeleteNote={handleDeleteNote}
-						updatedAt={activeNote?.updated_at}
-						wordCount={wordCount}
-					/>
-
-					<div className="flex-1 overflow-hidden relative">
-						{!activeNoteId ? (
-							<EmptyState />
-						) : (
-							<Editor
-								ref={editorRef}
-								content={content}
-								onChange={setContent}
-								onScheduleSave={scheduleSave}
+		<Toast.Provider toastManager={toastManager}>
+			<TooltipProvider>
+				<div className="flex h-screen overflow-hidden">
+					<AnimatePresence initial={false}>
+						{sidebarOpen && (
+							<Sidebar
+								notes={notes}
 								activeNoteId={activeNoteId}
-								previewMode={previewMode}
+								onSelectNote={handleSelectNote}
+								onNewNote={handleNewNote}
+								onDuplicateNote={handleDuplicateNote}
+								onDeleteNote={handleDeleteNote}
 							/>
 						)}
-					</div>
-				</main>
-			</div>
-		</TooltipProvider>
+					</AnimatePresence>
+
+					<main className="flex-1 flex flex-col min-w-0 bg-background">
+						<Toolbar
+							sidebarOpen={sidebarOpen}
+							onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+							activeNoteId={activeNoteId}
+							previewMode={previewMode}
+							onTogglePreview={() => setPreviewMode((prev) => !prev)}
+							onNewNote={handleNewNote}
+							onCopyMarkdown={handleCopyMarkdown}
+							onDeleteNote={handleDeleteNote}
+							updatedAt={activeNote?.updated_at}
+							wordCount={wordCount}
+						/>
+
+						<div className="flex-1 overflow-hidden relative">
+							{!activeNoteId ? (
+								<EmptyState />
+							) : (
+								<Editor
+									ref={editorRef}
+									content={content}
+									onChange={setContent}
+									onScheduleSave={scheduleSave}
+									activeNoteId={activeNoteId}
+									previewMode={previewMode}
+								/>
+							)}
+						</div>
+					</main>
+				</div>
+			</TooltipProvider>
+			<ToastHost />
+		</Toast.Provider>
 	);
 }
