@@ -5,7 +5,7 @@ import {
 	IconTrash,
 } from "@tabler/icons-react";
 import { motion } from "framer-motion";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -26,7 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/utils/formatDate";
 
-const NoteItem = React.memo(function NoteItem({
+function NoteItem({
 	note,
 	isActive,
 	onSelect,
@@ -113,6 +113,6 @@ const NoteItem = React.memo(function NoteItem({
 			</AlertDialog>
 		</>
 	);
-});
+}
 
 export default NoteItem;

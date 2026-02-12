@@ -1,8 +1,7 @@
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
-import React from "react";
 import NoteItem from "./NoteItem";
 
-const Sidebar = React.memo(function Sidebar({
+function Sidebar({
 	notes,
 	activeNoteId,
 	onSelectNote,
@@ -42,6 +41,6 @@ const Sidebar = React.memo(function Sidebar({
 			</div>
 		</motion.aside>
 	);
-});
+}
 
 export default Sidebar;

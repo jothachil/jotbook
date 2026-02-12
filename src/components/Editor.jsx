@@ -1,37 +1,31 @@
-import React, { forwardRef, useCallback } from "react";
+import { forwardRef } from "react";
 import MarkdownPreview from "@/components/MarkdownPreview";
 
 const Editor = forwardRef(function Editor(
 	{ content, onChange, onScheduleSave, activeNoteId, previewMode },
 	ref,
 ) {
-	const handleTabKey = useCallback(
-		(e) => {
-			if (e.key === "Tab") {
-				e.preventDefault();
-				const textarea = ref.current;
-				const start = textarea.selectionStart;
-				const end = textarea.selectionEnd;
-				const newValue =
-					content.substring(0, start) + "  " + content.substring(end);
-				onChange(newValue);
-				onScheduleSave(activeNoteId, newValue);
-				setTimeout(() => {
-					textarea.selectionStart = textarea.selectionEnd = start + 2;
-				}, 0);
-			}
-		},
-		[content, activeNoteId, onChange, onScheduleSave, ref],
-	);
+	const handleTabKey = (e) => {
+		if (e.key === "Tab") {
+			e.preventDefault();
+			const textarea = ref.current;
+			const start = textarea.selectionStart;
+			const end = textarea.selectionEnd;
+			const newValue =
+				content.substring(0, start) + "  " + content.substring(end);
+			onChange(newValue);
+			onScheduleSave(activeNoteId, newValue);
+			setTimeout(() => {
+				textarea.selectionStart = textarea.selectionEnd = start + 2;
+			}, 0);
+		}
+	};
 
-	const handleChange = useCallback(
-		(e) => {
-			const newContent = e.target.value;
-			onChange(newContent);
-			onScheduleSave(activeNoteId, newContent);
-		},
-		[activeNoteId, onChange, onScheduleSave],
-	);
+	const handleChange = (e) => {
+		const newContent = e.target.value;
+		onChange(newContent);
+		onScheduleSave(activeNoteId, newContent);
+	};
 
 	return (
 		<div className="absolute inset-0 flex flex-col">

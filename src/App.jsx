@@ -1,12 +1,6 @@
 import { Toast } from "@base-ui/react/toast";
 import { AnimatePresence } from "framer-motion";
-import React, {
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Editor from "@/components/Editor";
 import EmptyState from "@/components/EmptyState";
 import Sidebar from "@/components/Sidebar";
@@ -26,6 +20,7 @@ export default function App() {
 	const editorRef = useRef(null);
 	const saveTimeoutRef = useRef(null);
 	const hasBumpedRef = useRef(false);
+	const isDirtyRef = useRef(false);
 	const contentRef = useRef("");
 	const activeNoteIdRef = useRef(null);
 	const handleNewNoteRef = useRef(null);
@@ -33,11 +28,11 @@ export default function App() {
 		typeof window !== "undefined" ? window.innerWidth : 0,
 	);
 
-	const loadNotes = useCallback(async () => {
+	const loadNotes = async () => {
 		const data = await window.api.getNotes();
 		setNotes(data);
 		return data;
-	}, []);
+	};
 
 	// Load all notes on mount
 	useEffect(() => {
@@ -86,7 +81,8 @@ export default function App() {
 	}, []);
 
 	// Auto-save with debounce — bumps note to top once per editing session
-	const scheduleSave = useCallback((noteId, newContent) => {
+	const scheduleSave = (noteId, newContent) => {
+		isDirtyRef.current = true;
 		if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 
 		if (!hasBumpedRef.current) {
@@ -110,38 +106,37 @@ export default function App() {
 				),
 			);
 		}, 600);
-	}, []);
+	};
 
-	const flushSave = useCallback(async (noteId, currentContent) => {
+	const flushSave = async (noteId, currentContent) => {
 		if (saveTimeoutRef.current) {
 			clearTimeout(saveTimeoutRef.current);
 			saveTimeoutRef.current = null;
 		}
-		if (!noteId) return;
+		if (!noteId || !isDirtyRef.current) return;
+		isDirtyRef.current = false;
 		const firstLine = currentContent.split("\n")[0] || "";
 		const title = firstLine.replace(/^#+\s*/, "").trim() || "Untitled";
 		await window.api.updateNote(noteId, title, currentContent);
-	}, []);
+	};
 
-	const handleSelectNote = useCallback(
-		async (id) => {
-			const currentActiveId = activeNoteIdRef.current;
-			const currentContent = contentRef.current;
-			if (currentActiveId) {
-				await flushSave(currentActiveId, currentContent);
-			}
-			hasBumpedRef.current = false;
-			setActiveNoteId(id);
-			const note = await window.api.getNote(id);
-			if (note) {
-				setContent(note.content || "");
-				setTimeout(() => editorRef.current?.focus(), 0);
-			}
-		},
-		[flushSave],
-	);
+	const handleSelectNote = async (id) => {
+		const currentActiveId = activeNoteIdRef.current;
+		const currentContent = contentRef.current;
+		if (currentActiveId) {
+			await flushSave(currentActiveId, currentContent);
+		}
+		hasBumpedRef.current = false;
+		isDirtyRef.current = false;
+		setActiveNoteId(id);
+		const note = await window.api.getNote(id);
+		if (note) {
+			setContent(note.content || "");
+			setTimeout(() => editorRef.current?.focus(), 0);
+		}
+	};
 
-	const handleNewNote = useCallback(async () => {
+	const handleNewNote = async () => {
 		const currentActiveId = activeNoteIdRef.current;
 		const currentContent = contentRef.current;
 		if (currentActiveId) {
@@ -153,25 +148,22 @@ export default function App() {
 		setActiveNoteId(note.id);
 		setContent("");
 		setTimeout(() => editorRef.current?.focus(), 0);
-	}, [flushSave, loadNotes]);
+	};
 	handleNewNoteRef.current = handleNewNote;
 
-	const handleDuplicateNote = useCallback(
-		async (id) => {
-			if (!id) return;
-			const note = await window.api.duplicateNote(id);
-			if (note) {
-				await loadNotes();
-				hasBumpedRef.current = true;
-				setActiveNoteId(note.id);
-				setContent(note.content || "");
-				setTimeout(() => editorRef.current?.focus(), 0);
-			}
-		},
-		[loadNotes],
-	);
+	const handleDuplicateNote = async (id) => {
+		if (!id) return;
+		const note = await window.api.duplicateNote(id);
+		if (note) {
+			await loadNotes();
+			hasBumpedRef.current = true;
+			setActiveNoteId(note.id);
+			setContent(note.content || "");
+			setTimeout(() => editorRef.current?.focus(), 0);
+		}
+	};
 
-	const handleCopyMarkdown = useCallback(async () => {
+	const handleCopyMarkdown = async () => {
 		const currentActiveId = activeNoteIdRef.current;
 		const currentContent = contentRef.current;
 		if (!currentActiveId) return;
@@ -185,36 +177,31 @@ export default function App() {
 		} catch {
 			// Ignore clipboard failures to avoid blocking UI
 		}
-	}, []);
+	};
 
 	const activeNote = notes.find((n) => n.id === activeNoteId);
-	const wordCount = useMemo(() => {
-		const words = content.trim().split(/\s+/).filter(Boolean);
-		return words.length;
-	}, [content]);
+	const words = content.trim().split(/\s+/).filter(Boolean);
+	const wordCount = words.length;
 
-	const handleDeleteNote = useCallback(
-		async (id) => {
-			const currentActiveId = activeNoteIdRef.current;
-			const noteId = id || currentActiveId;
-			if (!noteId) return;
-			await window.api.deleteNote(noteId);
-			const updatedNotes = await loadNotes();
+	const handleDeleteNote = async (id) => {
+		const currentActiveId = activeNoteIdRef.current;
+		const noteId = id || currentActiveId;
+		if (!noteId) return;
+		await window.api.deleteNote(noteId);
+		const updatedNotes = await loadNotes();
 
-			if (noteId === currentActiveId) {
-				if (updatedNotes.length > 0) {
-					const first = updatedNotes[0];
-					setActiveNoteId(first.id);
-					const note = await window.api.getNote(first.id);
-					setContent(note?.content || "");
-				} else {
-					setActiveNoteId(null);
-					setContent("");
-				}
+		if (noteId === currentActiveId) {
+			if (updatedNotes.length > 0) {
+				const first = updatedNotes[0];
+				setActiveNoteId(first.id);
+				const note = await window.api.getNote(first.id);
+				setContent(note?.content || "");
+			} else {
+				setActiveNoteId(null);
+				setContent("");
 			}
-		},
-		[loadNotes],
-	);
+		}
+	};
 
 	return (
 		<Toast.Provider toastManager={toastManager}>
