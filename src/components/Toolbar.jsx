@@ -98,6 +98,7 @@ export default function Toolbar({
 						<ToolbarButton
 							icon={previewMode ? IconPencil : IconEye}
 							label={previewMode ? "Edit" : "Preview"}
+							shortcut="⌘P"
 							onClick={onTogglePreview}
 						/>
 						<ToolbarDivider />

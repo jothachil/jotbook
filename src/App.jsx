@@ -79,6 +79,10 @@ export default function App() {
 				e.preventDefault();
 				setSidebarOpen((prev) => !prev);
 			}
+			if ((e.metaKey || e.ctrlKey) && e.key === "p") {
+				e.preventDefault();
+				setPreviewMode((prev) => !prev);
+			}
 		};
 		document.addEventListener("keydown", handleKeyDown);
 		return () => document.removeEventListener("keydown", handleKeyDown);

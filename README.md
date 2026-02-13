@@ -13,7 +13,7 @@ Grab the latest release from the [Releases page](https://github.com/jothachil/jo
 - **Auto-save** — 600ms debounce, nothing is ever lost
 - **Markdown preview** — Toggle rendered preview with syntax highlighting
 - **Export & copy** — Export as `.md` or copy raw markdown to clipboard
-- **Keyboard shortcuts** — `⌘N` new note, `⌘B` toggle sidebar
+- **Keyboard shortcuts** — `⌘N` new note, `⌘B` toggle sidebar, `⌘P` toggle preview
 - **Context menus** — Right-click for quick actions
 - **Dark theme** — Native macOS title bar with orange accent
 
