@@ -1,6 +1,6 @@
 # JotBook
 
-A minimal, fast desktop note-taking app built with Electron and React. Notes are stored locally in SQLite and auto-saved as you type.
+A minimal, fast desktop note-taking app. Auto-saves as you type, stores everything locally in SQLite. No cloud, no account.
 
 ![JotBook](https://res.cloudinary.com/drch6exvq/image/upload/v1770898129/Jotbook/Jotbook.jpg)
 
@@ -10,116 +10,48 @@ Grab the latest release from the [Releases page](https://github.com/jothachil/jo
 
 ## Features
 
-- **Auto-save** — Notes save automatically with a 600ms debounce, so nothing is lost.
-- **Markdown preview** — Write in plain text with a monospace editor, toggle preview mode with syntax highlighting powered by Shiki.
-- **Export to Markdown** — Export any note as a `.md` file via a native save dialog.
-- **Copy markdown** — Copy the raw markdown content to clipboard with one click.
-- **Duplicate notes** — Quickly duplicate a note including its content.
-- **Keyboard shortcuts** — `⌘N` / `Ctrl+N` to create a new note, `⌘B` / `Ctrl+B` to toggle the sidebar.
-- **Context menus** — Right-click any note for quick actions (new, duplicate, export, delete).
-- **Dark theme** — A neutral palette with an orange accent, using Geist for UI and IBM Plex Mono for the editor.
-- **Native feel** — macOS-style hidden title bar with traffic light controls and draggable regions.
-
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Desktop | Electron 40 |
-| Build | Electron Forge + Vite |
-| UI | React 19 + React Compiler |
-| Styling | Tailwind CSS v4 |
-| Components | Radix UI / shadcn/ui |
-| Animations | Framer Motion |
-| Icons | Tabler Icons |
-| Markdown | unified + remark + rehype + Shiki |
-| Database | better-sqlite3 (SQLite, WAL mode) |
-| Linting | Biome |
+- **Auto-save** — 600ms debounce, nothing is ever lost
+- **Markdown preview** — Toggle rendered preview with syntax highlighting
+- **Export & copy** — Export as `.md` or copy raw markdown to clipboard
+- **Keyboard shortcuts** — `⌘N` new note, `⌘B` toggle sidebar
+- **Context menus** — Right-click for quick actions
+- **Dark theme** — Native macOS title bar with orange accent
 
 ## Getting Started
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) (v18 or later recommended)
-- npm or yarn
-
-### Installation
 
 ```bash
 git clone https://github.com/jothachil/jotbook.git
 cd jotbook
 npm install
-```
-
-### Development
-
-```bash
 npm start
 ```
 
-This launches the Electron app in development mode with hot-reload via Vite.
-
-### Linting & Formatting
-
-```bash
-npm run lint          # Check for issues
-npm run lint:fix      # Auto-fix issues
-npm run format        # Format all files
-```
-
-### Packaging
+## Build
 
 ```bash
 npm run make
 ```
 
-Builds platform-specific distributables:
-
-- **macOS** — ZIP
-- **Windows** — Squirrel installer
-- **Linux** — DEB / RPM
-
-## Project Structure
-
-```
-src/
-├── main.js              # Electron main process & IPC handlers
-├── preload.js           # Context bridge (window.api)
-├── renderer.jsx         # React entry point
-├── App.jsx              # Root component & state management
-├── database.js          # SQLite CRUD operations
-├── index.css            # Tailwind config & theme variables
-├── components/
-│   ├── Editor.jsx       # Note editor with lazy-loaded preview
-│   ├── EmptyState.jsx   # Placeholder when no note selected
-│   ├── MarkdownPreview.jsx  # Rendered markdown with syntax highlighting
-│   ├── NoteItem.jsx     # Note row with context menu
-│   ├── Sidebar.jsx      # Collapsible note list
-│   ├── Toolbar.jsx      # Top bar actions
-│   ├── DeleteNoteDialog.jsx
-│   ├── ToastHost.jsx    # Toast notifications
-│   └── ui/              # shadcn/ui primitives
-├── lib/
-│   └── utils.js         # cn() class name helper
-└── utils/
-    └── formatDate.js    # Relative date formatting
-docs/
-└── index.html           # Landing page (GitHub Pages / Vercel)
-```
-
-## Architecture
-
-The app follows Electron's standard three-process model:
-
-1. **Main process** (`main.js`) — Creates the browser window, registers IPC handlers, and manages the SQLite database.
-2. **Preload script** (`preload.js`) — Exposes a safe `window.api` bridge via `contextBridge` for the renderer to call database operations.
-3. **Renderer** (`App.jsx`) — A React app that manages UI state, handles keyboard shortcuts, and communicates with the main process through the exposed API.
-
-Notes are persisted in a SQLite database (`notes.db`) stored in the app's user data directory with WAL mode enabled for better performance. The markdown preview pipeline (unified + remark + rehype + Shiki) is lazy-loaded so it only impacts bundle size when preview mode is activated.
-
-## Website
-
-The landing page lives in `docs/` and can be deployed to [GitHub Pages](https://pages.github.com/) (serve from `/docs`) or [Vercel](https://vercel.com/) (set root directory to `docs`).
-
 ## License
 
-MIT
+MIT License
+
+Copyright (c) 2026 John Thachil
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
