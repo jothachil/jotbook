@@ -72,8 +72,11 @@ module.exports = {
 	},
 	makers: [
 		{
-			name: "@electron-forge/maker-zip",
-			platforms: ["darwin"],
+			name: "@electron-forge/maker-dmg",
+			config: {
+				format: "ULFO",
+				icon: "./images/icon.icns",
+			},
 		},
 	],
 	plugins: [
